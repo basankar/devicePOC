@@ -32,11 +32,13 @@ func (t *SimpleChainCode) Init(stub shim.ChaincodeStubInterface, function string
 	
 	var imeiIds IMEI_Holder
 	
+	imeiIds := "\"imeis\":\""+args[0]+"\" "
+	
 	bytes, err := json.Marshal(imeiIds);
 	
 	err = stub.PutState("imeiIds", bytes)
 	
-	return nil, nil
+	return nil, err
 	 
 } 
 
