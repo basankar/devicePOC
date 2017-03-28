@@ -32,9 +32,9 @@ func (t *SimpleChainCode) Init(stub shim.ChaincodeStubInterface, function string
 	
 	var imeiIds IMEI_Holder
 	
-	imeiIds := "\"imeis\":\""+args[0]+"\" "
-	
 	bytes, err := json.Marshal(imeiIds);
+	
+	if err != nil { return nil, errors.New("Error creating IMEI_Holder record") }
 	
 	err = stub.PutState("imeiIds", bytes)
 	
