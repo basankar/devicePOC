@@ -170,7 +170,7 @@ func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, devi
 func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "MANUFACTURER" &&
 		recipientAffiliation == "WAREHOUSE" &&
-		dev.status == "CREATED"	  {
+		dev.Status == "CREATED"	  {
 			dev.Status = "DELIVERED_TO_WAREHOUSE"
 			dev.Owner = "VENDOR"
 			dev.DateOfDelivery = "04/27/2017"
