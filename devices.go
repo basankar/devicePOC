@@ -17,6 +17,9 @@ type Device struct {
 	DeviceName     string `json:"devicename"`
 	DeviceModel    string `json:"devicemodel"`
 	DateOfManf     string `json:"dateofmanf"`
+	ConsignmentNumber string `json:"consignmentnumber"`
+	DateOfDelivery string `json:"dateofdelivery"`
+	DateOfReceipt  string `json:"dateofreceipt"`
 	DateOfSale     string `json:"dateofsale"`
 	OldIMEI        string `json:"oldimei"`
 	IMEI	       string `json:"imei"`
@@ -46,7 +49,24 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 	
 	if function == "create_device" {
 		return	t.createDevice(stub, args[0])
-	}	
+	} else {
+		d, err := t.get_device(stub, args[0])
+		if err != nil { fmt.Printf("error retrieving device details"); return nil, errors.New("error retrieving device details")}
+		
+		//if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "MANUFACTURER", args[0], "WAREHOUSE")
+		//} 
+		//else if function = "TRF_TO_STRE" { return t.transfer_to_store(stub, d, args[0], "WAREHOUSE")
+		//} else if function = "TRF_TO_CUST" { return t.transfer_to_customer(stub, d, args[0], "STORE")
+		//} else if function = "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")
+		//} else if function = "ACPT_FROM_WAREHOUSE" { return t.accept_from_vendor(stub, d, args[0], "STORE")					
+		//} else if function = "ACPT_FROM_STRE" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")			
+		//} else if function = "ACPT_FROM_WAREHOUSE" { return t.accept_from_vendor(stub, d, args[0], "VENDOR")
+		//} else if function = "ACPT_FROM_CUST" { return t.accept_from_vendor(stub, d, args[0], "STORE")			
+		//} else if function = "RTN_TO_STRE" { return t.accept_from_vendor(stub, d, args[0], "STORE")
+		//} else if function = "RTN_TO_WAREHOUSE" { return t.accept_from_vendor(stub, d, args[0], "STORE")
+		//} else if function = "RTN_TO_VENDOR" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")			
+		//} 
+	}		
 	return nil, nil
 }
 
@@ -145,6 +165,25 @@ func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, devi
 	if err != nil {fmt.Printf("error converting device record "); return bytes, errors.New("Error converting device record")}
 	
 	return bytes, nil
+}
+
+func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, Device dev, callerAffliation string, recipientName string, recipientAffliation string)  ([]byte, error) {
+	if  callerAffliation == "MANUFACTURER" &&
+		recipientAffiliation == "WAREHOUSE" &&
+		dev.status == "CREATED"	  {
+			dev.status == "DELIVERED_TO_WAREHOUSE"
+			dev.Owner == "VENDOR"
+			dev.DateOfDelivery == ""
+			dev.ConsignmentNumber = ""
+	} else {
+		fmt.Printf(" tranfer_to_WareHouse :: Permission denied"); 
+		return nil, errors.New("error while updating device status to Delivered to warehouse"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	if err != nil {fmt.Printf("error while updating the status", return nil, errors.New("error saving device details on transfer to warehouse")}
+	
+	return nil, nil
 }
 
 func main() {
