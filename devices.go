@@ -53,8 +53,8 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		d, err := t.get_device(stub, args[0])
 		if err != nil { fmt.Printf("error retrieving device details"); return nil, errors.New("error retrieving device details")}
 		
-		//if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "MANUFACTURER", args[0], "WAREHOUSE")
-		//} 
+		if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "MANUFACTURER", args[0], "WAREHOUSE")
+		} 
 		//else if function = "TRF_TO_STRE" { return t.transfer_to_store(stub, d, args[0], "WAREHOUSE")
 		//} else if function = "TRF_TO_CUST" { return t.transfer_to_customer(stub, d, args[0], "STORE")
 		//} else if function = "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")
@@ -167,7 +167,7 @@ func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, devi
 	return bytes, nil
 }
 
-func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, Device dev, callerAffliation string, recipientName string, recipientAffliation string) ([]byte, error) {
+func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffliation string) ([]byte, error) {
 	if  callerAffliation == "MANUFACTURER" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.status == "CREATED"	  {
