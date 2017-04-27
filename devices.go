@@ -167,14 +167,14 @@ func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, devi
 	return bytes, nil
 }
 
-func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffliation string) ([]byte, error) {
+func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "MANUFACTURER" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.status == "CREATED"	  {
-			dev.status == "DELIVERED_TO_WAREHOUSE"
-			dev.Owner == "VENDOR"
-			dev.DateOfDelivery == ""
-			dev.ConsignmentNumber = ""
+			dev.Status = "DELIVERED_TO_WAREHOUSE"
+			dev.Owner = "VENDOR"
+			dev.DateOfDelivery = "04/27/2017"
+			dev.ConsignmentNumber = "IM12345"
 	} else {
 		fmt.Printf(" tranfer_to_WareHouse :: Permission denied"); 
 		return nil, errors.New("error while updating device status to Delivered to warehouse"); 
