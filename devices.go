@@ -181,7 +181,8 @@ func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface,
 	}
 	
 	_, err := t.save_changes(stub, dev)
-	if err != nil {fmt.Printf("error while updating the status", return nil, errors.New("error saving device details on transfer to warehouse")}
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on transfer to warehouse")}
 	
 	return nil, nil
 }
