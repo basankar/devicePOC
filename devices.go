@@ -167,7 +167,7 @@ func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, devi
 	return bytes, nil
 }
 
-func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, Device dev, callerAffliation string, recipientName string, recipientAffliation string)  ([]byte, error) {
+func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, Device dev, callerAffliation string, recipientName string, recipientAffliation string) ([]byte, error) {
 	if  callerAffliation == "MANUFACTURER" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.status == "CREATED"	  {
