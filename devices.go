@@ -102,7 +102,7 @@ func (t *SimpleChainCode) createDevice(stub shim.ChaincodeStubInterface, imeiId 
 	IMEI_ID     := "\"imei\":\""+imeiId+"\", "
 	Status     	:= "\"status\":\"CREATED\", "
 	SoldBy     	:= "\"soldby\":\"UNDEFINED\", "
-	Owner     	:= "\"owner\":\"MANF\" "
+	Owner     	:= "\"owner\":\"VENDOR\" "
 	
 	json_device := " {" +DeviceName+DeviceModel+DateOfManf+DateOfSale+OldIMEI+IMEI_ID+Status+SoldBy+Owner+"} "
 	
