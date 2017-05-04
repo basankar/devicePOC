@@ -59,7 +59,7 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		} else if function == "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, "WAREHOUSE", args[0], "WAREHOUSE")
 		} else if function == "TRF_TO_STRE" { return t.tranfer_to_store(stub, d, "WAREHOUSE", args[0], args[1], "STORE")
 		} else if function == "ACPT_FROM_WAREHOUSE" { return t.accept_from_warehouse(stub, d, "STORE", args[0], "STORE")	
-		} else if function == "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[0], "CUSTOMER")
+		} else if function == "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[0], args[1], "CUSTOMER")
 		} else if function == "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "CUSTOMER", args[0], "STORE")					
 		} else if function == "EXCHANGE_DEV" { 
 			oldDev, err := t.get_device(stub, args[1])
@@ -80,9 +80,9 @@ func (t *SimpleChainCode) Query(stub shim.ChaincodeStubInterface, function strin
 		if err != nil { fmt.Printf("error retrieving device details"); return nil, errors.New("error retrieving device details")}
 		return t.get_dev_details(stub, d)
 	}  else if function == "check_unique_imei" {
-		return t.check_unique_imei(stub, args[0], caller, caller_affiliation)
+		return t.check_unique_imei(stub, args[0])
 	} else if function == "get_devices" {
-		return t.get_devices(stub, caller, caller_affiliation)
+		return t.get_devices(stub)
 	}
 	return nil, nil
 }
@@ -173,22 +173,22 @@ func (t *SimpleChainCode) get_device(stub shim.ChaincodeStubInterface, imeiId st
 	  return dev, nil
 }
 
-func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, device Device, caller string, callerAffiliation string) ([]byte, error){
+func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, device Device) ([]byte, error){
 	
 	
 	bytes, err := json.Marshal(device)
 	
 	if err != nil { return nil, errors.New("Invalid device object") }
 	
-	if device.Owner  == caller {
-		return bytes, nill
-	} else {
-		return nil, errors.New("Permission denied: could not return device details");
-	}
+//	if device.Owner  == caller {
+		return bytes, nil
+//	} else {
+//		return nil, errors.New("Permission denied: could not return device details");
+//	}
 	
 }
 
-func (t *SimpleChaincode) check_unique_imei(stub shim.ChaincodeStubInterface, imei string, caller string, caller_affiliation string) ([]byte, error) {
+func (t *SimpleChainCode) check_unique_imei(stub shim.ChaincodeStubInterface, imei string) ([]byte, error) {
 	_, err := t.get_device(stub, imei)
 	if err == nil {
 		return []byte("false"), errors.New("IMEI is not unique")
@@ -197,7 +197,7 @@ func (t *SimpleChaincode) check_unique_imei(stub shim.ChaincodeStubInterface, im
 	}
 }
 
-func (t *SimpleChainCode) get_devices(stub shim.ChaincodeStubInterface, caller string, caller_affiliation string) ([]byte, error) {
+func (t *SimpleChainCode) get_devices(stub shim.ChaincodeStubInterface) ([]byte, error) {
 	bytes, err := stub.GetState("imeiIds")
 
 	if err != nil { return nil, errors.New("Unable to get imeiIds") }
@@ -219,7 +219,7 @@ func (t *SimpleChainCode) get_devices(stub shim.ChaincodeStubInterface, caller s
 
 		if err != nil {return nil, errors.New("Failed to retrieve IMEI")}
 
-		temp, err = t.get_dev_details(stub, dev, caller, caller_affiliation)
+		temp, err = t.get_dev_details(stub, dev)
 
 		if err == nil {
 			result += string(temp) + ","
