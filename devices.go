@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"encoding/json"
+	"time"
 )
 
 var logger = shim.NewLogger("DIChaincode")
@@ -51,21 +52,23 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		return	t.createDevice(stub, args[0])
 	} else {
 		d, err := t.get_device(stub, args[0])
+		
 		if err != nil { fmt.Printf("error retrieving device details"); return nil, errors.New("error retrieving device details")}
 		
-		if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "MANUFACTURER", args[0], "WAREHOUSE")
+		if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "VENDOR", args[0], args[1], "WAREHOUSE")
+		} else if function = "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, "WAREHOUSE", args[0], "WAREHOUSE")
+		} else if function = "TRF_TO_STRE" { return t.tranfer_to_store(stub, d, "WAREHOUSE", args[0], args[1], "STORE")
+		} else if function = "ACPT_FROM_WAREHOUSE" { return t.accept_from_warehouse(stub, d, "STORE", args[0], "STORE")	
+		} else if function = "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[0], "CUSTOMER")
+		} else if function = "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "CUSTOMER", args[0], "STORE")					
+		} else if function = "EXCHANGE_DEV" { 
+			oldDev, err := t.get_device(stub, args[1])
+			return t.exchange_device(stub, oldDev, d, "STORE", args[0], "CUSTOMER")
+		} else if function = "RTN_TO_WAREHOUSE" { return t.return_to_warehouse(stub, d, "STORE", args[0], args[1], "WAREHOUSE")
+		} else if function = "ACPT_FROM_STRE" { return t.return_from_store(stub, d, "WAREHOUSE", args[0], "WAREHOUSE")		
+		} else if function = "RTN_TO_VENDOR" { return t.return_to_vendor(stub, d, "WAREHOUSE", args[0], args[1] "VENDOR")
+		} else if function = "ACPT_FROM_WAREHOUSE" { return t.return_from_warehouse(stub, d, "VENDOR", args[0], "VENDOR")		
 		} 
-		//else if function = "TRF_TO_STRE" { return t.transfer_to_store(stub, d, args[0], "WAREHOUSE")
-		//} else if function = "TRF_TO_CUST" { return t.transfer_to_customer(stub, d, args[0], "STORE")
-		//} else if function = "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")
-		//} else if function = "ACPT_FROM_WAREHOUSE" { return t.accept_from_vendor(stub, d, args[0], "STORE")					
-		//} else if function = "ACPT_FROM_STRE" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")			
-		//} else if function = "ACPT_FROM_WAREHOUSE" { return t.accept_from_vendor(stub, d, args[0], "VENDOR")
-		//} else if function = "ACPT_FROM_CUST" { return t.accept_from_vendor(stub, d, args[0], "STORE")			
-		//} else if function = "RTN_TO_STRE" { return t.accept_from_vendor(stub, d, args[0], "STORE")
-		//} else if function = "RTN_TO_WAREHOUSE" { return t.accept_from_vendor(stub, d, args[0], "STORE")
-		//} else if function = "RTN_TO_VENDOR" { return t.accept_from_vendor(stub, d, args[0], "WAREHOUSE")			
-		//} 
 	}		
 	return nil, nil
 }
@@ -76,6 +79,10 @@ func (t *SimpleChainCode) Query(stub shim.ChaincodeStubInterface, function strin
 		d, err := t.get_device(stub, args[0])
 		if err != nil { fmt.Printf("error retrieving device details"); return nil, errors.New("error retrieving device details")}
 		return t.get_dev_details(stub, d)
+	}  else if function == "check_unique_imei" {
+		return t.check_unique_imei(stub, args[0], caller, caller_affiliation)
+	} else if function == "get_devices" {
+		return t.get_devices(stub, caller, caller_affiliation)
 	}
 	return nil, nil
 }
@@ -136,6 +143,10 @@ func (t *SimpleChainCode) createDevice(stub shim.ChaincodeStubInterface, imeiId 
 
 }
 
+//=================================================================================================
+//  save_changes -- This function is used to save the updates of device
+//=================================================================================================
+
 func (t *SimpleChainCode) save_changes(stub shim.ChaincodeStubInterface, d Device) (bool, error) {
 
 	bytes, err := json.Marshal(d)
@@ -149,6 +160,10 @@ func (t *SimpleChainCode) save_changes(stub shim.ChaincodeStubInterface, d Devic
 	return true, nil
 }
 
+//=========================================================================================================================
+//  get_device method is used to retrive device data
+//=========================================================================================================================
+
 func (t *SimpleChainCode) get_device(stub shim.ChaincodeStubInterface, imeiId string) (Device, error) {
 	  var dev Device
 	  bytes, err := stub.GetState(imeiId)
@@ -158,24 +173,77 @@ func (t *SimpleChainCode) get_device(stub shim.ChaincodeStubInterface, imeiId st
 	  return dev, nil
 }
 
-func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, device Device) ([]byte, error){
-	var err error
+func (t *SimpleChainCode) get_dev_details(stub shim.ChaincodeStubInterface, device Device, caller string, callerAffiliation string) ([]byte, error){
+	
+	
 	bytes, err := json.Marshal(device)
 	
-	if err != nil {fmt.Printf("error converting device record "); return bytes, errors.New("Error converting device record")}
+	if err != nil { return nil, errors.New("Invalid device object") }
 	
-	return bytes, nil
+	if device.Owner  == caller {
+		return bytes, nill
+	} else {
+		return nil, errors.New("Permission denied: could not return device details");
+	}
+	
 }
 
-func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+func (t *SimpleChaincode) check_unique_imei(stub shim.ChaincodeStubInterface, imei string, caller string, caller_affiliation string) ([]byte, error) {
+	_, err := t.get_device(stub, imei)
+	if err == nil {
+		return []byte("false"), errors.New("IMEI is not unique")
+	} else {
+		return []byte("true"), nil
+	}
+}
+
+func (t *SimpleChainCode) get_devices(stub shim.ChaincodeStubInterface, caller string, caller_affiliation string) ([]byte, error) {
+	bytes, err := stub.GetState("imeiIds")
+
+	if err != nil { return nil, errors.New("Unable to get imeiIds") }
+
+	var imeiIDs IMEI_Holder
+
+	err = json.Unmarshal(bytes, &imeiIDs)
+
+	if err != nil {	return nil, errors.New("Corrupt IMEI_Holder") }
+
+	result := "["
+
+	var temp []byte
+	var dev Device
+
+	for _, imei := range imeiIDs.IMEIs {
+
+		dev, err = t.get_device(stub, imei)
+
+		if err != nil {return nil, errors.New("Failed to retrieve IMEI")}
+
+		temp, err = t.get_dev_details(stub, dev, caller, caller_affiliation)
+
+		if err == nil {
+			result += string(temp) + ","
+		}
+	}
+
+	if len(result) == 1 {
+		result = "[]"
+	} else {
+		result = result[:len(result)-1] + "]"
+	}
+
+	return []byte(result), nil
+}
+
+
+func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, consignNumber string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "MANUFACTURER" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.Status == "CREATED"	  {
 		fmt.Printf(" tranfer_to_WareHouse :: data set"); 
 			dev.Status = "DELIVERED_TO_WAREHOUSE"
-			dev.Owner = "VENDOR"
-			dev.DateOfDelivery = "04/27/2017"
-			dev.ConsignmentNumber = "IM12345"
+			dev.DateOfDelivery = time.Now().String();
+			dev.ConsignmentNumber = consignNumber
 	} else {
 		fmt.Printf(" tranfer_to_WareHouse :: Permission denied"); 
 		return nil, errors.New("error while updating device status to Delivered to warehouse"); 
@@ -185,6 +253,223 @@ func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface,
 	
 	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on transfer to warehouse")}
 	fmt.Printf(" tranfer_to_WareHouse :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) accept_from_vendor(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "WAREHOUSE" &&
+		recipientAffiliation == "WAREHOUSE" &&
+		dev.Owner = "VENDOR" && 
+		dev.Status == "DELIVERED_TO_WAREHOUSE"	  {
+		fmt.Printf(" accept_from_vendor"); 
+			dev.Status = "Received"
+			dev.Owner = "WAREHOUSE"
+			dev.DateOfReceipt = time.Now().String();
+	} else {
+		fmt.Printf(" tranfer_to_WareHouse :: Permission denied"); 
+		return nil, errors.New("error while receiving device at warehouse"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details while accept from warehouse")}
+	fmt.Printf(" accept_from_vendor :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) tranfer_to_store(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, consignNumber string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "WAREHOUSE" &&
+		recipientAffiliation == "STORE" &&
+		dev.Status == "Received"	  {
+		fmt.Printf(" tranfer_to_store :: data set"); 
+			dev.Status = "DELIVERED_TO_STORE"
+			dev.DateOfDelivery = time.Now().String()
+			dev.ConsignmentNumber = consignNumber 
+	} else {
+		fmt.Printf(" tranfer_to_store :: Permission denied"); 
+		return nil, errors.New("error while updating device status to Delivered to store"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on transfer to store")}
+	fmt.Printf(" tranfer_to_store :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) accept_from_warehouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "STORE" &&
+		recipientAffiliation == "STORE" &&
+		dev.Owner == "WAREHOUSE" &&
+		dev.Status == "DELIVERED_TO_STORE"	  {
+		fmt.Printf(" accept_from_warehouse :: data set"); 
+			dev.Status = "Received"
+			dev.Owner = "Store"
+			dev.DateOfReceipt = time.Now().String()
+			
+	} else {
+		fmt.Printf(" accept from warehouse :: Permission denied"); 
+		return nil, errors.New("error while updating device status to received by store"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on accept from warehouse")}
+	fmt.Printf(" accept_from_warehouse :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) tranfer_to_customer(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, callerName string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "STORE" &&
+		recipientAffiliation == "CUSTOMER" &&
+		dev.Status == "Received"	  {
+		fmt.Printf(" tranfer_to_store :: data set"); 
+			dev.Status = "DELIVERED_TO_CUSTOMER"
+			dev.DateOfSale = time.Now().String()
+			dev.SoldBy = recipientName
+			dev.Owner = recipientAffiliation
+			
+	} else {
+		fmt.Printf(" tranfer_to_customer :: Permission denied"); 
+		return nil, errors.New("error while updating device status to Delivered to customer"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on transfer to customer")}
+	fmt.Printf(" tranfer_to_customer :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) return_from_customer(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "STORE" &&
+		recipientAffiliation == "STORE" &&
+		dev.owner == "CUSTOMER" &&
+		dev.Status == "DELIVERED_TO_CUSTOMER"	  {
+		fmt.Printf(" tranfer_to_store :: data set"); 
+			dev.Status = "Returned_To_Store"
+			dev.DateOfReceipt = time.Now().String()
+			dev.owner = recipientName
+	} else {
+		fmt.Printf(" return_from_customer :: Permission denied"); 
+		return nil, errors.New("error while updating device status to return from customer"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on return from customer")}
+	fmt.Printf(" return from customer :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) exchange_device(stub shim.ChaincodeStubInterface, oldDev Device, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "STORE" &&
+		recipientAffiliation == "CUSTOMER" &&
+		oldDev.owner == "STORE" &&
+		oldDev.Status == "RETURNED_TO_STORE" &&
+		dev.Status == "RECEIVED"
+		oldDev.DeviceModel == dev.DeviceModel	  {
+		fmt.Printf(" exchange device :: data set"); 
+			dev.Status = "Exchanged"
+			dev.DateOfSale = time.Now().String()
+			dev.owner = Customer
+			dev.OldIMEI=oldDev.IMEI
+	} else {
+		fmt.Printf(" return_from_customer :: Permission denied"); 
+		return nil, errors.New("error while updating device status to return from customer"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on return from customer")}
+	fmt.Printf(" return from customer :: completed"); 
+	return nil, nil
+}
+
+
+func (t *SimpleChainCode) return_to_warehouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, consignNumber string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "STORE" &&
+		recipientAffiliation == "WAREHOUSE" &&
+		dev.owner == "STORE" &&
+		dev.Status == "Returned_to_Store"	  {
+		fmt.Printf(" return_to_warehouse :: data set"); 
+			dev.Status = "Returned_To_Warehouse"
+			dev.DateOfDelivery = time.Now().String()
+			dev.owner = recipientName
+			dev.ConsignmentNumber = consignNumber
+	} else {
+		fmt.Printf(" return_to_warehouse :: Permission denied"); 
+		return nil, errors.New("error while updating device status to return_to_warehouse"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on return_to_warehouse")}
+	fmt.Printf(" return_to_warehouse :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) return_from_store(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "WAREHOUSE" &&
+		recipientAffiliation == "WAREHOUSE" &&
+		dev.owner == "STORE" &&
+		dev.Status == "Returned_to_Warehouse"	  {
+		fmt.Printf(" return_from_store :: data set"); 
+			dev.Status = "Received"
+			dev.DateOfReceipt = time.Now().String()
+			dev.owner = "WAREHOUSE"
+	} else {
+		fmt.Printf(" return_from_store :: Permission denied"); 
+		return nil, errors.New("error while updating device status to return_from_store"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on return_from_store")}
+	fmt.Printf(" return_from_store :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) return_to_vendor(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, consignNumber string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "WAREHOUSE" &&
+		recipientAffiliation == "VENDOR" &&
+		dev.owner == "STORE" &&
+		dev.Status == "Received"	  {
+		fmt.Printf(" return_to_vendor :: data set"); 
+			dev.Status = "Returned_to_Manufacturer"
+			dev.DateOfDelivery = time.Now().String()
+			dev.owner = "WAREHOUSE"
+			dev.ConsignmentNumber = consignNumber
+	} else {
+		fmt.Printf(" return_to_vendor :: Permission denied"); 
+		return nil, errors.New("error while updating device status to return from customer"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on return_to_vendor")}
+	fmt.Printf(" return_to_vendor :: completed"); 
+	return nil, nil
+}
+
+func (t *SimpleChainCode) return_from_warehouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	if  callerAffliation == "VENDOR" &&
+		recipientAffiliation == "VENDOR" &&
+		dev.owner == "STORE" &&
+		dev.Status == "Returned_to_Manufacturer"	  {
+		fmt.Printf(" return_from_warehouse :: data set"); 
+			dev.Status = "Received"
+			dev.DateOfDelivery = time.Now().String()
+			dev.owner = "VENDOR"
+	} else {
+		fmt.Printf(" return_from_warehouse :: Permission denied"); 
+		return nil, errors.New("error while updating device status to return_from_warehouse"); 
+	}
+	
+	_, err := t.save_changes(stub, dev)
+	
+	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on return_from_warehouse")}
+	fmt.Printf(" return_from_warehouse :: completed"); 
 	return nil, nil
 }
 
