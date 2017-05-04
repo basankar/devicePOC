@@ -171,6 +171,7 @@ func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface,
 	if  callerAffliation == "MANUFACTURER" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.Status == "CREATED"	  {
+		fmt.Printf(" tranfer_to_WareHouse :: data set"); 
 			dev.Status = "DELIVERED_TO_WAREHOUSE"
 			dev.Owner = "VENDOR"
 			dev.DateOfDelivery = "04/27/2017"
@@ -183,7 +184,7 @@ func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface,
 	_, err := t.save_changes(stub, dev)
 	
 	if err != nil {fmt.Printf("error while updating the status"); return nil, errors.New("error saving device details on transfer to warehouse")}
-	
+	fmt.Printf(" tranfer_to_WareHouse :: completed"); 
 	return nil, nil
 }
 
