@@ -63,7 +63,7 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		} else if function == "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "CUSTOMER", args[0], "STORE")					
 		} else if function == "EXCHANGE_DEV" { 
 			oldDev, err := t.get_device(stub, args[1])
-			if err != nill {fmt.Printf("unable to get old device"); return nil, errors.New("Unable to return old device")}
+			if err != nil {fmt.Printf("unable to get old device"); return nil, errors.New("Unable to return old device")}
 			return t.exchange_device(stub, oldDev, d, "STORE", args[0], "CUSTOMER")
 		} else if function == "RTN_TO_WAREHOUSE" { return t.return_to_warehouse(stub, d, "STORE", args[0], args[1], "WAREHOUSE")
 		} else if function == "ACPT_FROM_STRE" { return t.return_from_store(stub, d, "WAREHOUSE", args[0], "WAREHOUSE")		
