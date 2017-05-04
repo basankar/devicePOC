@@ -55,20 +55,20 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		
 		if err != nil { fmt.Printf("error retrieving device details"); return nil, errors.New("error retrieving device details")}
 		
-		if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "VENDOR", args[0], args[1], "WAREHOUSE")
-		} else if function == "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, "WAREHOUSE", args[0], "WAREHOUSE")
-		} else if function == "TRF_TO_STRE" { return t.tranfer_to_store(stub, d, "WAREHOUSE", args[0], args[1], "STORE")
-		} else if function == "ACPT_FROM_WAREHOUSE" { return t.accept_from_warehouse(stub, d, "STORE", args[0], "STORE")	
-		} else if function == "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[0], args[1], "CUSTOMER")
-		} else if function == "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "CUSTOMER", args[0], "STORE")					
+		if function == "TRF_TO_WH" { return t.tranfer_to_WareHouse(stub, d, "VENDOR", args[1], args[2], "WAREHOUSE")
+		} else if function == "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, "WAREHOUSE", args[1], "WAREHOUSE")
+		} else if function == "TRF_TO_STRE" { return t.tranfer_to_store(stub, d, "WAREHOUSE", args[1], args[2], "STORE")
+		} else if function == "ACPT_FROM_WAREHOUSE" { return t.accept_from_warehouse(stub, d, "STORE", args[1], "STORE")	
+		} else if function == "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[1], args[2], "CUSTOMER")
+		} else if function == "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "CUSTOMER", args[1], "STORE")					
 		} else if function == "EXCHANGE_DEV" { 
-			oldDev, err := t.get_device(stub, args[1])
+			oldDev, err := t.get_device(stub, args[2])
 			if err != nil {fmt.Printf("unable to get old device"); return nil, errors.New("Unable to return old device")}
-			return t.exchange_device(stub, oldDev, d, "STORE", args[0], "CUSTOMER")
-		} else if function == "RTN_TO_WAREHOUSE" { return t.return_to_warehouse(stub, d, "STORE", args[0], args[1], "WAREHOUSE")
-		} else if function == "ACPT_FROM_STRE" { return t.return_from_store(stub, d, "WAREHOUSE", args[0], "WAREHOUSE")		
-		} else if function == "RTN_TO_VENDOR" { return t.return_to_vendor(stub, d, "WAREHOUSE", args[0], args[1], "VENDOR")
-		} else if function == "ACPT_FROM_WAREHOUSE" { return t.return_from_warehouse(stub, d, "VENDOR", args[0], "VENDOR")		
+			return t.exchange_device(stub, oldDev, d, "STORE", args[1], "CUSTOMER")
+		} else if function == "RTN_TO_WAREHOUSE" { return t.return_to_warehouse(stub, d, "STORE", args[1], args[2], "WAREHOUSE")
+		} else if function == "ACPT_FROM_STRE" { return t.return_from_store(stub, d, "WAREHOUSE", args[1], "WAREHOUSE")		
+		} else if function == "RTN_TO_VENDOR" { return t.return_to_vendor(stub, d, "WAREHOUSE", args[1], args[2], "VENDOR")
+		} else if function == "ACPT_FROM_WAREHOUSE" { return t.return_from_warehouse(stub, d, "VENDOR", args[1], "VENDOR")		
 		} 
 	}		
 	return nil, nil
@@ -238,7 +238,7 @@ func (t *SimpleChainCode) get_devices(stub shim.ChaincodeStubInterface) ([]byte,
 
 
 func (t *SimpleChainCode) tranfer_to_WareHouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, consignNumber string, recipientAffiliation string) ([]byte, error) {
-	if  callerAffliation == "MANUFACTURER" &&
+	if  callerAffliation == "VENDOR" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.Status == "CREATED"	  {
 		fmt.Printf(" tranfer_to_WareHouse :: data set"); 
