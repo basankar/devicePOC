@@ -367,12 +367,12 @@ func (t *SimpleChainCode) exchange_device(stub shim.ChaincodeStubInterface, oldD
 		recipientAffiliation == "CUSTOMER" &&
 		oldDev.Owner == "STORE" &&
 		oldDev.Status == "RETURNED_TO_STORE" &&
-		dev.Status == "RECEIVED"
+		dev.Status == "RECEIVED" &&
 		oldDev.DeviceModel == dev.DeviceModel	  {
 		fmt.Printf(" exchange device :: data set"); 
 			dev.Status = "Exchanged"
 			dev.DateOfSale = time.Now().String()
-			dev.Owner = Customer
+			dev.Owner = "Customer"
 			dev.OldIMEI=oldDev.IMEI
 	} else {
 		fmt.Printf(" return_from_customer :: Permission denied"); 
