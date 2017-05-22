@@ -59,12 +59,12 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		} else if function == "ACPT_FROM_VENDOR" { return t.accept_from_vendor(stub, d, "WAREHOUSE", args[1], "WAREHOUSE")
 		} else if function == "TRF_TO_STRE" { return t.tranfer_to_store(stub, d, "WAREHOUSE", args[1], args[2], "STORE")
 		} else if function == "ACPT_FROM_WAREHOUSE" { return t.accept_from_warehouse(stub, d, "STORE", args[1], "STORE")	
-		} else if function == "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[1], args[2], "CUSTOMER")
-		} else if function == "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "CUSTOMER", args[1], "STORE")					
+		} else if function == "TRF_TO_CUST" { return t.tranfer_to_customer(stub, d, "STORE", args[1], args[2], "STORE")
+		} else if function == "RTN_FROM_CUST" { return t.return_from_customer(stub, d, "STORE", args[1], "STORE")					
 		} else if function == "EXCHANGE_DEV" { 
 			oldDev, err := t.get_device(stub, args[2])
 			if err != nil {fmt.Printf("unable to get old device"); return nil, errors.New("Unable to return old device")}
-			return t.exchange_device(stub, oldDev, d, "STORE", args[1], "CUSTOMER")
+			return t.exchange_device(stub, oldDev, d, "STORE", args[1], "STORE")
 		} else if function == "RTN_TO_WAREHOUSE" { return t.return_to_warehouse(stub, d, "STORE", args[1], args[2], "WAREHOUSE")
 		} else if function == "ACPT_FROM_STRE" { return t.return_from_store(stub, d, "WAREHOUSE", args[1], "WAREHOUSE")		
 		} else if function == "RTN_TO_VENDOR" { return t.return_to_vendor(stub, d, "WAREHOUSE", args[1], args[2], "VENDOR")
@@ -305,7 +305,7 @@ func (t *SimpleChainCode) accept_from_warehouse(stub shim.ChaincodeStubInterface
 		dev.Status == "DELIVERED_TO_STORE"	  {
 		fmt.Printf(" accept_from_warehouse :: data set"); 
 			dev.Status = "Received"
-			dev.Owner = "Store"
+			dev.Owner = "STORE"
 			dev.DateOfReceipt = time.Now().String()
 			
 	} else {
@@ -322,13 +322,14 @@ func (t *SimpleChainCode) accept_from_warehouse(stub shim.ChaincodeStubInterface
 
 func (t *SimpleChainCode) tranfer_to_customer(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, callerName string, recipientName string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "STORE" &&
-		recipientAffiliation == "CUSTOMER" &&
+		recipientAffiliation == "STORE" &&
+		dev.Owner == "STORE" &&
 		dev.Status == "Received"	  {
 		fmt.Printf(" tranfer_to_store :: data set"); 
 			dev.Status = "DELIVERED_TO_CUSTOMER"
 			dev.DateOfSale = time.Now().String()
-			dev.SoldBy = recipientName
-			dev.Owner = recipientAffiliation
+			dev.SoldBy = callerName
+			dev.Owner = recipientName
 			
 	} else {
 		fmt.Printf(" tranfer_to_customer :: Permission denied"); 
@@ -365,7 +366,7 @@ func (t *SimpleChainCode) return_from_customer(stub shim.ChaincodeStubInterface,
 
 func (t *SimpleChainCode) exchange_device(stub shim.ChaincodeStubInterface, oldDev Device, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "STORE" &&
-		recipientAffiliation == "CUSTOMER" &&
+		recipientAffiliation == "STORE" &&
 		oldDev.Owner == "STORE" &&
 		oldDev.Status == "RETURNED_TO_STORE" &&
 		dev.Status == "RECEIVED" &&
@@ -373,7 +374,7 @@ func (t *SimpleChainCode) exchange_device(stub shim.ChaincodeStubInterface, oldD
 		fmt.Printf(" exchange device :: data set"); 
 			dev.Status = "Exchanged"
 			dev.DateOfSale = time.Now().String()
-			dev.Owner = "Customer"
+			dev.Owner = recipientName
 			dev.OldIMEI=oldDev.IMEI
 	} else {
 		fmt.Printf(" return_from_customer :: Permission denied"); 
@@ -396,7 +397,6 @@ func (t *SimpleChainCode) return_to_warehouse(stub shim.ChaincodeStubInterface, 
 		fmt.Printf(" return_to_warehouse :: data set"); 
 			dev.Status = "Returned_To_Warehouse"
 			dev.DateOfDelivery = time.Now().String()
-			dev.Owner = recipientName
 			dev.ConsignmentNumber = consignNumber
 	} else {
 		fmt.Printf(" return_to_warehouse :: Permission denied"); 
@@ -434,12 +434,11 @@ func (t *SimpleChainCode) return_from_store(stub shim.ChaincodeStubInterface, de
 func (t *SimpleChainCode) return_to_vendor(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, consignNumber string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "WAREHOUSE" &&
 		recipientAffiliation == "VENDOR" &&
-		dev.Owner == "STORE" &&
+		dev.Owner == "WAREHOUSE" &&
 		dev.Status == "Received"	  {
 		fmt.Printf(" return_to_vendor :: data set"); 
 			dev.Status = "Returned_to_Manufacturer"
 			dev.DateOfDelivery = time.Now().String()
-			dev.Owner = "WAREHOUSE"
 			dev.ConsignmentNumber = consignNumber
 	} else {
 		fmt.Printf(" return_to_vendor :: Permission denied"); 
@@ -456,7 +455,7 @@ func (t *SimpleChainCode) return_to_vendor(stub shim.ChaincodeStubInterface, dev
 func (t *SimpleChainCode) return_from_warehouse(stub shim.ChaincodeStubInterface, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
 	if  callerAffliation == "VENDOR" &&
 		recipientAffiliation == "VENDOR" &&
-		dev.Owner == "STORE" &&
+		dev.Owner == "WAREHOUSE" &&
 		dev.Status == "Returned_to_Manufacturer"	  {
 		fmt.Printf(" return_from_warehouse :: data set"); 
 			dev.Status = "Received"
