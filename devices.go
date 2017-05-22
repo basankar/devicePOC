@@ -68,7 +68,7 @@ func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function stri
 		} else if function == "RTN_TO_WAREHOUSE" { return t.return_to_warehouse(stub, d, "STORE", args[1], args[2], "WAREHOUSE")
 		} else if function == "ACPT_FROM_STRE" { return t.return_from_store(stub, d, "WAREHOUSE", args[1], "WAREHOUSE")		
 		} else if function == "RTN_TO_VENDOR" { return t.return_to_vendor(stub, d, "WAREHOUSE", args[1], args[2], "VENDOR")
-		} else if function == "ACPT_FROM_WAREHOUSE" { return t.return_from_warehouse(stub, d, "VENDOR", args[1], "VENDOR")		
+		} else if function == "ACPT_RTN_FROM_WAREHOUSE" { return t.return_from_warehouse(stub, d, "VENDOR", args[1], "VENDOR")		
 		} 
 	}		
 	return nil, nil
