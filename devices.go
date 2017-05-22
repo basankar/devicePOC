@@ -349,7 +349,7 @@ func (t *SimpleChainCode) return_from_customer(stub shim.ChaincodeStubInterface,
 		dev.Owner == "CUSTOMER" &&
 		dev.Status == "DELIVERED_TO_CUSTOMER"	  {
 		fmt.Printf(" tranfer_to_store :: data set"); 
-			dev.Status = "Returned_To_Store"
+			dev.Status = "RETURNED_TO_STORE"
 			dev.DateOfReceipt = time.Now().String()
 			dev.Owner = recipientName
 	} else {
@@ -369,7 +369,7 @@ func (t *SimpleChainCode) exchange_device(stub shim.ChaincodeStubInterface, oldD
 		recipientAffiliation == "STORE" &&
 		oldDev.Owner == "STORE" &&
 		oldDev.Status == "RETURNED_TO_STORE" &&
-		dev.Status == "RECEIVED" &&
+		dev.Status == "Received" &&
 		oldDev.DeviceModel == dev.DeviceModel	  {
 		fmt.Printf(" exchange device :: data set"); 
 			dev.Status = "Exchanged"
@@ -393,9 +393,9 @@ func (t *SimpleChainCode) return_to_warehouse(stub shim.ChaincodeStubInterface, 
 	if  callerAffliation == "STORE" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.Owner == "STORE" &&
-		dev.Status == "Returned_to_Store"	  {
+		dev.Status == "RETURNED_TO_STORE"	  {
 		fmt.Printf(" return_to_warehouse :: data set"); 
-			dev.Status = "Returned_To_Warehouse"
+			dev.Status = "RETURNED_TO_WAREHOUSE"
 			dev.DateOfDelivery = time.Now().String()
 			dev.ConsignmentNumber = consignNumber
 	} else {
@@ -414,7 +414,7 @@ func (t *SimpleChainCode) return_from_store(stub shim.ChaincodeStubInterface, de
 	if  callerAffliation == "WAREHOUSE" &&
 		recipientAffiliation == "WAREHOUSE" &&
 		dev.Owner == "STORE" &&
-		dev.Status == "Returned_to_Warehouse"	  {
+		dev.Status == "RETURNED_TO_WAREHOUSE"	  {
 		fmt.Printf(" return_from_store :: data set"); 
 			dev.Status = "Received"
 			dev.DateOfReceipt = time.Now().String()
