@@ -48,8 +48,11 @@ func (t *SimpleChainCode) Init(stub shim.ChaincodeStubInterface, function string
 
 func (t *SimpleChainCode) Invoke(stub shim.ChaincodeStubInterface, function string, args[] string) ([]byte, error) {
 	
-	if function == "create_device" {
+	if function == "create_device" && len(args) == 1 {
 		return	t.createDevice(stub, args[0])
+	} else if function == "create_device" && len(args) > 1 {
+		if len(args) != 4 {fmt.Printf("Incorrect input data passed. Cannot process creation"); return nil, errors.New("Invalid input arguments for device creation")} 
+		return	t.createDeviceUsingForm(stub, args)
 	} else {
 		d, err := t.get_device(stub, args[0])
 		
@@ -143,6 +146,67 @@ func (t *SimpleChainCode) createDevice(stub shim.ChaincodeStubInterface, imeiId 
 	return nil, nil
 
 }
+
+
+func (t *SimpleChainCode) createDeviceUsingForm(stub shim.ChaincodeStubInterface, args[] string) ([]byte, error) {
+	
+	var d Device
+	var err error
+	var IMEI_Ids IMEI_Holder
+	var imeiId string
+	
+	imeiId = args[0]
+	
+	DeviceName  := "\"deviceName\":\""+args[1]+"\", "
+	DeviceModel := "\"devicemodel\":\""+args[2]+"\", "
+	DateOfManf  := "\"dateofmanf\":\"''"+args[3]+"''\" , "
+	DateOfSale  := "\"dateofsale\":\"UNDEFINED\", "
+	OldIMEI     := "\"oldimei\":\"UNDEFINED\", "
+	IMEI_ID     := "\"imei\":\""+imeiId+"\", "
+	Status     	:= "\"status\":\"CREATED\", "
+	SoldBy     	:= "\"soldby\":\"UNDEFINED\", "
+	Owner     	:= "\"owner\":\"VENDOR\" "
+	
+	json_device := " {" +DeviceName+DeviceModel+DateOfManf+DateOfSale+OldIMEI+IMEI_ID+Status+SoldBy+Owner+"} "
+	
+	if imeiId == "" {
+		fmt.Printf("Invalid device ID")
+	}
+	
+	err = json.Unmarshal([]byte(json_device), &d)
+	
+	record, err := stub.GetState(d.IMEI)
+	
+	if record != nil { return nil, errors.New("Device already exists") }
+	
+	_, err = t.save_changes(stub, d)
+	
+	if err != nil { fmt.Printf("CREATEDEVICE: Error saving changes: %s", err); return nil, errors.New("Error saving changes") }
+
+	bytes, err := stub.GetState("imeiIds")
+
+	if err != nil { return nil, errors.New("Unable to get imeiIds") }
+
+	
+
+	err = json.Unmarshal(bytes, &IMEI_Ids)
+
+	if err != nil {	return nil, errors.New("Corrupt IMEI_Holder record") }
+
+	IMEI_Ids.IMEIs = append(IMEI_Ids.IMEIs, imeiId)
+
+	bytes, err = json.Marshal(IMEI_Ids)
+
+	if err != nil { fmt.Printf("Error creating IMEI_Holder record") }
+
+	err = stub.PutState("imeiIds", bytes)
+
+	if err != nil { return nil, errors.New("Unable to put the state") }
+
+	return nil, nil
+
+}
+
 
 //=================================================================================================
 //  save_changes -- This function is used to save the updates of device
@@ -365,6 +429,16 @@ func (t *SimpleChainCode) return_from_customer(stub shim.ChaincodeStubInterface,
 }
 
 func (t *SimpleChainCode) exchange_device(stub shim.ChaincodeStubInterface, oldDev Device, dev Device, callerAffliation string, recipientName string, recipientAffiliation string) ([]byte, error) {
+	fmt.Printf("callerAffliation :: " + callerAffliation);
+	fmt.Printf("recipientAffiliation :: " + recipientAffiliation);
+	fmt.Printf("oldDev.Owner :: " + oldDev.Owner);
+	fmt.Printf("oldDev.Status :: " + oldDev.Status);
+	fmt.Printf("dev.Status :: " + dev.Status);
+	fmt.Printf("oldDev.DeviceModel :: " + oldDev.DeviceModel);
+	fmt.Printf("dev.DeviceModel :: " + dev.DeviceModel);
+	fmt.Printf("model compare result :: " )
+	fmt.Println(oldDev.DeviceModel == dev.DeviceModel);
+	
 	if  callerAffliation == "STORE" &&
 		recipientAffiliation == "STORE" &&
 		oldDev.Owner == "STORE" &&
