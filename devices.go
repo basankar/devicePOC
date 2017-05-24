@@ -511,7 +511,7 @@ func (t *SimpleChainCode) return_to_vendor(stub shim.ChaincodeStubInterface, dev
 		dev.Owner == "WAREHOUSE" &&
 		dev.Status == "Received"	  {
 		fmt.Printf(" return_to_vendor :: data set"); 
-			dev.Status = "Returned_to_Manufacturer"
+			dev.Status = "RETURNED_TO_VENDOR"
 			dev.DateOfDelivery = time.Now().String()
 			dev.ConsignmentNumber = consignNumber
 	} else {
@@ -530,7 +530,7 @@ func (t *SimpleChainCode) return_from_warehouse(stub shim.ChaincodeStubInterface
 	if  callerAffliation == "VENDOR" &&
 		recipientAffiliation == "VENDOR" &&
 		dev.Owner == "WAREHOUSE" &&
-		dev.Status == "Returned_to_Manufacturer"	  {
+		dev.Status == "RETURNED_TO_VENDOR"	  {
 		fmt.Printf(" return_from_warehouse :: data set"); 
 			dev.Status = "Received"
 			dev.DateOfDelivery = time.Now().String()
